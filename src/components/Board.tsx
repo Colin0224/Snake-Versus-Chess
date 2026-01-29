@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { gameLogic, convotoB, convotoI } from '../hooks/gameLogic';
 
 
-const { chess, initialFen } = gameLogic();
+const { chess, initialFen, getBoardState } = gameLogic();
 
 var mSquare = ''
 
@@ -22,12 +22,11 @@ const typeMap = {
     R: 'WRook'
 };
 
-chess.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/NNNNNNNK w KQkq - 0 1');
 
 export function Board() {
 
-    var fenArr = chess.fen().split(' ');
-    var BoardState = fenArr[0]
+
+    var BoardState = getBoardState();
 
     const [cells, setCells] = useState(
         Array(8).fill(null).map(() => Array(8).fill(0))
@@ -55,14 +54,14 @@ export function Board() {
             chess.move(mSquare + '-' + m2Square)
 
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
-            fenArr = chess.fen().split(' ');
-            BoardState = fenArr[0]
+            BoardState = getBoardState();
             boardArray = BoardState?.split('/').map(row => {
                 return row
                     .replace(/\d/g, d => ' '.repeat(Number(d)))
                     .split('');
             });
             if (chess.isCheckmate() == true) {
+
                 console.log("Checkmate")
             }
         } else {
@@ -133,7 +132,7 @@ export function Board() {
 
 
                                     )}</div>
-                            //                            className={`pd-1 size-14 flex items-center justify-center ${cells[rowIndex][index] == 1 ? 'bg-[#B1A7FC]' : cells[rowIndex][index] == 2 ? 'bg-yellow-200' : (rowIndex + index) % 2 == 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]' }`} onClick={() => handleClick(rowIndex, index, event)}>{val != ' ' && (<img src = {`/Pieces/${typeMap[val as keyof typeof typeMap]}.svg`} className = "p-[6px]" /> ) }</div>
+                            //className={`pd-1 size-14 flex items-center justify-center ${cells[rowIndex][index] == 1 ? 'bg-[#B1A7FC]' : cells[rowIndex][index] == 2 ? 'bg-yellow-200' : (rowIndex + index) % 2 == 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]' }`} onClick={() => handleClick(rowIndex, index, event)}>{val != ' ' && (<img src = {`/Pieces/${typeMap[val as keyof typeof typeMap]}.svg`} className = "p-[6px]" /> ) }</div>
                         )
                         )
                     ))}
