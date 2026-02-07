@@ -1,12 +1,12 @@
 import './Board.css'
-import React, { useState } from 'react';
-import { gameLogic, convotoB, convotoI, boardToFen, getSnake} from '../hooks/gameLogic';
+import { useState } from 'react';
+import { useGameLogic, squareToCoords, coordsToSquare, getSnake} from '../hooks/gameLogic';
 import { type Square } from 'chess.js';
 
 
-const { chess, initialFen, getBoardState , chessMoves, move} = gameLogic();
+const { chess, getBoardState, chessMoves, move } = useGameLogic();
 
-var mSquare: Square | '' = ''
+let selectedSquare: Square | '' = ''
 
 const typeMap = {
     p: 'BPawn',
@@ -33,7 +33,7 @@ const degMap = {
 export function Board() {
 
     const [snakeData, setSnakeData] = useState(getSnake());
-    var BoardState = getBoardState();
+    let boardState = getBoardState();
 
     const [cells, setCells] = useState(
         Array(8).fill(null).map(() => Array(8).fill(0))
@@ -43,20 +43,20 @@ export function Board() {
 
 
 
-    var boardArray = BoardState
+    let boardArray = boardState
 
     // With this, im able to have a boardArray, that contains, say, piece data, 
 
-    const svgPiece = (val:String, rowIndex: Number, index: Number) => {
-        if(val != 'S'){
+    const svgPiece = (val: string, rowIndex: number, index: number) => {
+        if(val !== 'S'){
             return {
                 src: `/Pieces/${typeMap[val as keyof typeof typeMap]}.svg`, 
                 style: {}
         }
-        }else if(val == 'S'){
+        }else if(val === 'S'){
             let head = snakeData[0]
             let tail = snakeData.at(-1)
-            if(rowIndex == head[0] && index == head[1]){
+            if(rowIndex === head[0] && index === head[1]){
                 let headNext = snakeData.at(1)
                 let x = headNext[0] - head[0]
                 let y = headNext[1] - head[1]
@@ -67,7 +67,7 @@ export function Board() {
                     src: '/Pieces/snakeHead.svg', 
                     style: {transform: `rotate(${degrees}deg) scale(1.24)`}
                 }
-            }else if (rowIndex == tail[0] && index == tail[1]){
+            }else if (rowIndex === tail[0] && index === tail[1]){
                 let tailNext = snakeData.at(-2)
                 let x = tailNext[0] - tail[0]
                 let y = tailNext[1] - tail[1]
@@ -84,13 +84,13 @@ export function Board() {
                 let currSnake = snakeData.at(sindex)
                 let nextSnake = snakeData.at(sindex + 1)
                 let prevSnake = snakeData.at(sindex - 1)
-                if(nextSnake[0] == prevSnake[0] || nextSnake[1] == prevSnake[1]){
+                if(nextSnake[0] === prevSnake[0] || nextSnake[1] === prevSnake[1]){
                     let x = nextSnake[0] - currSnake[0]
                     let y = nextSnake[1] - currSnake[1]
                     let radian = Math.atan2(y, x)
                     const degrees = -1 * (radian) * (180/ Math.PI);
                     return { 
-                        src: 'Pieces/snakeBody.svg',
+                        src: '/Pieces/snakeBody.svg',
                         style: {transform: `rotate(${degrees}deg) scale(1.24)`}
                     }
                 }else{ 
@@ -103,7 +103,7 @@ export function Board() {
                     const degrees = (degMap as any)[strVal] || 0; 
 
                     return {
-                        src: 'Pieces/snakeCurve.svg', 
+                        src: '/Pieces/snakeCurve.svg', 
                         style: {transform: `rotate(${degrees}deg) scale(1.26)`}
                     }
                 }
@@ -119,27 +119,27 @@ export function Board() {
 
     }
 
-    const handleClick = (column: number, row: number, event: any) => {
-        setSnakeData(getSnake());
+    const handleClick = (column: number, row: number) => {
 
-        if (cells[column][row] == 2) {
+        if (cells[column][row] === 2) {
             
-            let m2Square = convotoI(row * 10 + (7 - column))
-            move(mSquare as Square, m2Square);
+            let m2Square = coordsToSquare(row * 10 + (7 - column))
+            move(selectedSquare as Square, m2Square);
+            setSnakeData(getSnake());
 
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
-            BoardState = getBoardState();
-            boardArray = BoardState
-            if (chess.isCheckmate() == true) {
+            boardState = getBoardState();
+            boardArray = boardState
+            if (chess.isCheckmate()) {
 
                 console.log("Checkmate")
             }
-        } else if (cells[column][row] == 1) {
+        } else if (cells[column][row] === 1) {
             // Clicked on already selected piece - unhighlight
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
-            mSquare = '';
+            selectedSquare = '';
         } else {
-            mSquare = updateBoardColor(column, row)
+            selectedSquare = updateBoardColor(column, row)
         }
 
     };
@@ -149,7 +149,7 @@ export function Board() {
     const updateBoardColor = (column: number, row: number) => {
         let updatedCell = handleClear()
 
-        let square = convotoI(10 * row + (7 - column))
+        let square = coordsToSquare(10 * row + (7 - column))
 
         let matrix = structuredClone(updatedCell);
 
@@ -158,13 +158,13 @@ export function Board() {
 
         const moves = chessMoves(square); 
 
-        moves.forEach((move, index) => {
+        moves.forEach((move) => {
             
-            let temp = convotoB(move.to)
+            let temp = squareToCoords(move.to)
 
             let v2 = temp[0].valueOf()
             let v1 = temp[1].valueOf()
-            if(boardArray[7 - v1][v2] == 'S'){
+            if(boardArray[7 - v1][v2] === 'S'){
                 matrix[7 - v1][v2] = 1; 
             }else{
             matrix[7 - v1][v2] = 2;
@@ -206,16 +206,16 @@ export function Board() {
                             const {src, style} = svgPiece(val, rowIndex, index);
                             return(
                             <div key={`${rowIndex}-${index}`}
-                                className={`pd-1 size-14 flex items-center justify-center ${cells[rowIndex][index] == 1 ? 'bg-[#B1A7FC]' : (rowIndex + index) % 2 == 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]'}`}
-                                onClick={() => handleClick(rowIndex, index, event)}>{
-                                    (val != ' ' || cells[rowIndex][index] == 2) && (<img src={src} style = {style}
-                                        className={` p-[6px] ${cells[rowIndex][index] == 2 ? 'h-4 w-4 bg-[#9990EB] rounded-full' : ''}
+                                className={`pd-1 size-14 flex items-center justify-center ${cells[rowIndex][index] === 1 ? 'bg-[#B1A7FC]' : (rowIndex + index) % 2 === 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]'}`}
+                                onClick={() => handleClick(rowIndex, index)}>{
+                                    (val !== ' ' || cells[rowIndex][index] === 2) && (<img src={src} style = {style}
+                                        className={` p-[6px] ${cells[rowIndex][index] === 2 ? 'h-4 w-4 bg-[#9990EB] rounded-full' : ''}
                                 `
                                         } />
 
 
                                     )}</div>
-                            //className={`pd-1 size-14 flex items-center justify-center ${cells[rowIndex][index] == 1 ? 'bg-[#B1A7FC]' : cells[rowIndex][index] == 2 ? 'bg-yellow-200' : (rowIndex + index) % 2 == 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]' }`} onClick={() => handleClick(rowIndex, index, event)}>{val != ' ' && (<img src = {`/Pieces/${typeMap[val as keyof typeof typeMap]}.svg`} className = "p-[6px]" /> ) }</div>
+                            //className={`pd-1 size-14 flex items-center justify-center ${cells[rowIndex][index] === 1 ? 'bg-[#B1A7FC]' : cells[rowIndex][index] === 2 ? 'bg-yellow-200' : (rowIndex + index) % 2 == 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]' }`} onClick={() => handleClick(rowIndex, index, event)}>{val != ' ' && (<img src = {`/Pieces/${typeMap[val as keyof typeof typeMap]}.svg`} className = "p-[6px]" /> ) }</div>
                         )
                     }
                     )
