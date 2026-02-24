@@ -1,56 +1,70 @@
-import { Chess, type Square} from 'chess.js';
+import { Chess, type Square } from 'chess.js';
 
+
+//having a gamereset funct()
+
+type SnakeSegment = [number, number];
+
+const INITIAL_FEN = 'rnb1kbnr/pppppppp/8/8/8/8/3S4/7K w kq - 0 1';
+const snakeReset: SnakeSegment[] = [[6, 3], [6, 2], [6, 1], [6, 0], [7, 0]];
+const cloneSnake = (segments: SnakeSegment[]): SnakeSegment[] =>
+    segments.map(([row, col]) => [row, col]);
 
 
 
 // the boardState is not stored in chess.js, rather it is being stored in an array, 
-    let board: string[][] = Array.from({length: 8}, () => 
+let board: string[][] = Array.from({ length: 8 }, () =>
     Array(8).fill('')
 );
 
-    let currentTurn: 'B' | 'W' = 'W';
+let currentTurn: 'B' | 'W' = 'W';
 
-let snake = [[6, 3], [6, 2], [6, 1], [6, 0], [7, 0]]
+let snake: SnakeSegment[] = cloneSnake(snakeReset);
 //Okay think about it, does it matter to the snake what the pieces are? like knight or some crap, I think its concerned with itself, all pieces are P, and there is a king, K, own M, the head is H, and S is the rest of the snake, 
 export function useGameLogic() {
 
-// Done chess.load(fen): Sets the board to a specific state (used at the top with your snake FEN string).
+    // Done chess.load(fen): Sets the board to a specific state (used at the top with your snake FEN string).
 
-// Done chess.fen(): Returns the FEN string of the current board state (used to update visuals).
+    // Done chess.fen(): Returns the FEN string of the current board state (used to update visuals).
 
-// chess.move(move): Attempts to make a move on the internal board logic.
+    // chess.move(move): Attempts to make a move on the internal board logic.
 
 
-// chess.isCheckmate(): Checks if the game is over by checkmate.
+    // chess.isCheckmate(): Checks if the game is over by checkmate.
 
-// chess.moves({ square, verbose }): Returns a list of all valid moves for a specific square.
+    // chess.moves({ square, verbose }): Returns a list of all valid moves for a specific square.
 
-// chess.attackers(square): (Called but currently unused/hanging on line 85). Returns pieces attacking a square.
-    
+    // chess.attackers(square): (Called but currently unused/hanging on line 85). Returns pieces attacking a square.
+
     const chess = new Chess()
 
     //chess.load
     const loadBoard = (fen: string) => {
 
-        if(currentTurn === 'W'){
+        if (currentTurn === 'W') {
             chess.load(fen.replace(/S/g, 'N'));  // White's turn = WHITE knight
-        }else if(currentTurn === 'B'){
+        } else if (currentTurn === 'B') {
             chess.load(fen.replace(/S/g, 'n'));  // Black's turn = BLACK knight
         }
-        
+
         let boardState = fen.split(' ')[0];
         board = boardState?.split('/').map(row => {
-        return row
-            .replace(/\d/g, d => ' '.repeat(Number(d)))
-            .split('');
-    });
-        for(let s of snake){   
+            return row
+                .replace(/\d/g, d => ' '.repeat(Number(d)))
+                .split('');
+        });
+        for (let s of snake) {
             board[s[0]][s[1]] = "S"
 
         }
     }
 
 
+    const resetGame = () => {
+        currentTurn = 'W';
+        snake = cloneSnake(snakeReset);
+        loadBoard(INITIAL_FEN);
+    }
 
     /* 
     Here is the idea, black is snake, white is person, white goes first, 
@@ -64,52 +78,51 @@ export function useGameLogic() {
         let tempindex = squareToCoords(square1)
         let val = board[7 - tempindex[1]][tempindex[0]]
 
-        if(val === "S" && currentTurn === 'W'){
-                // // Calculate adjacent squares for snake movement
-                // let snakeMoves: { to: Square }[] = [];
-                
-                // // Get current position as numbers
-                // let file = col;  // 0-7 (a-h)
-                // let rank = 7 - row;  // 0-7 (1-8)
-                
-                // // Check all 4 directions (up, down, left, right)
-                // const directions = [[0,1], [0,-1], [1,0], [-1,0]];
-                
-                // for (let [df, dr] of directions) {
-                //     let newFile = file + df;
-                //     let newRank = rank + dr;
-                //     if (newFile >= 0 && newFile < 8 && newRank >= 0 && newRank < 8) {
-                //         snakeMoves.push({ to: convotoI(newFile * 10 + newRank) });
-                //     }
-                // }
-                
-                // return snakeMoves;
+        if (val === "S" && currentTurn === 'W') {
+            // // Calculate adjacent squares for snake movement
+            // let snakeMoves: { to: Square }[] = [];
+
+            // // Get current position as numbers
+            // let file = col;  // 0-7 (a-h)
+            // let rank = 7 - row;  // 0-7 (1-8)
+
+            // // Check all 4 directions (up, down, left, right)
+            // const directions = [[0,1], [0,-1], [1,0], [-1,0]];
+
+            // for (let [df, dr] of directions) {
+            //     let newFile = file + df;
+            //     let newRank = rank + dr;
+            //     if (newFile >= 0 && newFile < 8 && newRank >= 0 && newRank < 8) {
+            //         snakeMoves.push({ to: convotoI(newFile * 10 + newRank) });
+            //     }
+            // }
+
+            // return snakeMoves;
 
             let sStart = squareToCoords(square1)
             let sEnd = squareToCoords(square2)
             let eaten = false
-            if(board[7 - sEnd[1]][sEnd[0]] !== 'S' && board[7 - sEnd[1]][sEnd[0]] !== ' '){
+            if (board[7 - sEnd[1]][sEnd[0]] !== 'S' && board[7 - sEnd[1]][sEnd[0]] !== ' ') {
                 eaten = true
             }
 
             board[7 - sStart[1]][sStart[0]] = ' '
             board[7 - sEnd[1]][sEnd[0]] = 'S'
             snake.unshift([7 - sEnd[1], sEnd[0]])
-            
-            if(!eaten){
+
+            if (!eaten) {
                 let temp = snake.pop();
                 if (temp) {
                     board[temp[0]][temp[1]] = ' '
                 }
             }
 
-            let myFen = boardToFen(board); 
-            myFen = myFen + " b - - 0 1"
-            currentTurn = 'B'
-            loadBoard(myFen)
+            let p = chess.fen().split(' ');
+            currentTurn = 'B';
+            loadBoard(`${boardToFen(board)} b ${p[2]} ${p[3]} ${p[4]} ${p[5]}`);
 
-            
-        }else{ 
+
+        } else {
             // I need a way to clean up my ideas, 
             // Okay so before someone does chess.move
             // I need to clean up my board, 
@@ -122,47 +135,39 @@ export function useGameLogic() {
             // now that i think about it, 
             // im not sure, 
             // because 
-            chess.move(square1 + '-' + square2)
+            chess.move({ from: square1, to: square2, promotion: 'n' });
+
+            let p = chess.fen().split(' ');
             currentTurn = currentTurn === 'W' ? 'B' : 'W';
-            loadBoard(chess.fen())
-            let myFen = boardToFen(board)
-            // with this board lets convert it into a fen, 
-            // now that we have the fen of the board, theres " b - - 0 1" that we need to attached to the back depehnding on cTurn
-            if(currentTurn === 'W'){
-                myFen += " w - - 0 1"
-                chess.load(myFen.replace(/S/g, 'N')); 
-            }else if(currentTurn === 'B'){
-                myFen += " b - - 0 1"
-                chess.load(myFen.replace(/S/g, 'n')); 
-            }
+            loadBoard(chess.fen());
+            chess.load(`${boardToFen(board)} ${currentTurn.toLowerCase()} ${p[2]} ${p[3]} ${p[4]} ${p[5]}`.replace(/S/g, currentTurn === 'W' ? 'N' : 'n'));
 
         }
     }
-    const fenReturn = () => {
-        
+    const getSnake = () => {
+        return cloneSnake(snake);
     }
-
-    const chessMoves = ( square : Square ) => {
+    const chessMoves = (square: Square) => {
         let arr = squareToCoords(square)
         let col = arr[0];
         let row = 7 - arr[1];
-        if(currentTurn === 'B' && board[row][col] !== "S"){
+        if (currentTurn === 'B' && board[row][col] !== "S") {
             return chess.moves({ square: square, verbose: true });
-        }else if(currentTurn === 'W'){
+        } else if (currentTurn === 'W') {
 
-            if(board[row][col] === "K"){
-                return chess.moves({square: square, verbose: true});
-            }else if(snake[0][0] === row && snake[0][1] === col && !chess.inCheck()){
+            if (board[row][col] === "K") {
+                return chess.moves({ square: square, verbose: true });
+            } else if (snake[0][0] === row && snake[0][1] === col && !chess.inCheck()) {
                 // Calculate adjacent squares for snake movement
                 let snakeMoves: { to: Square }[] = [];
-                
+
 
                 let file = col;  // 0-7 (a-h)
                 let rank = 7 - row;  // 0-7 (1-8)
-                
+
                 // Check all 4 directions (up, down, left, right)
-                const directions = [[0,1], [0,-1], [1,0], [-1,0]];
-                
+                const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
                 for (let [df, dr] of directions) {
                     let newFile = file + df;
                     let newRank = rank + dr;
@@ -170,69 +175,70 @@ export function useGameLogic() {
                         snakeMoves.push({ to: coordsToSquare(newFile * 10 + newRank) });
                     }
                 }
-                
+
                 return snakeMoves;
-            }                
-                                
-            
+            }
+
+
         }
         return [];
     }
 
-    loadBoard('rnbqkbnr/pppppppp/8/8/8/8/3S4/7K w - - 0 1');
+    loadBoard(INITIAL_FEN);
 
-    
+
 
 
     //var BoardState = chess.fen().split(' ')[0];
     //chess.fen 
     const getBoardState = () => {
-
-        return board;
+        return board.map((row) => [...row]);
     }
 
 
 
     return {
         chessMoves,
-        move, 
+        resetGame, 
+        move,
         getBoardState,
-
+        loadBoard, 
+        getSnake,
         chess,
         initialFen: chess.fen(),
     };
 
-    
+
 }
 export function squareToCoords(input: string): number[] {
 
     let char = input[0]
-    const input1 = char.toLowerCase().charCodeAt(0) - 97; 
+    const input1 = char.toLowerCase().charCodeAt(0) - 97;
 
 
-    let input2 = parseInt(input.slice(1)); 
-    input2 -= 1; 
+    let input2 = parseInt(input.slice(1));
+    input2 -= 1;
 
     return [input1, input2];
 }
 
 
-export function boardToFen(board: string[][]): string{
+export function boardToFen(board: string[][]): string {
     let res = ''
-    let counter = 0; 
-    for(let i = 0; i < board.length; i++){
-        for(let j = 0; j < board[0].length; j++){
-            if (board[i][j] !== " "){
-                if(counter > 0){
+    let counter = 0;
+    for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board[0].length; j++) {
+            if (board[i][j] !== " ") {
+                if (counter > 0) {
                     res = res + counter
                     counter = 0
                 }
                 res = res + board[i][j]
-            }else {
+            } else {
                 counter += 1
             }
         }
-        if( counter !== 0){
+        if (counter !== 0) {
             res = res + counter
             counter = 0
         }
@@ -240,21 +246,21 @@ export function boardToFen(board: string[][]): string{
     }
     res = res.slice(0, -1);
 
-    return res; 
+    return res;
 }
 
-    // let res = ""
+// let res = ""
 
-    // let char = input[0]; 
-    // char = char.toLowerCase();
-    // let charint = char.charCodeAt(0);
+// let char = input[0]; 
+// char = char.toLowerCase();
+// let charint = char.charCodeAt(0);
 
-    // charint = charint - 97 
-    // console.log(`this is ${charint}`)
-    // let intput = Number(input[1]); 
-    // intput + 1;
-    // console.log(`FINAL = ${ charint} ${intput}`)
-    // return [charint, Number(intput)];
+// charint = charint - 97 
+// console.log(`this is ${charint}`)
+// let intput = Number(input[1]); 
+// intput + 1;
+// console.log(`FINAL = ${ charint} ${intput}`)
+// return [charint, Number(intput)];
 
 
 export function coordsToSquare(input: number): Square {
@@ -266,5 +272,4 @@ export function coordsToSquare(input: number): Square {
 
     return (c1 + i2) as Square;
 }
-
 
