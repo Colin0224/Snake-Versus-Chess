@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 
 export function Header() {
-    const dialogRef = useRef(null);
+    const dialogRef = useRef<HTMLDialogElement>(null);
 
     const openModal = () => dialogRef.current?.showModal();
     const closeModal = () => dialogRef.current?.close();

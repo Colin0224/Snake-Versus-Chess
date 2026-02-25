@@ -40,7 +40,7 @@ export function Board() {
         Array(8).fill(null).map(() => Array(8).fill(0))
     );
 
-    const dialogRef = useRef(null);
+    const dialogRef = useRef<HTMLDialogElement>(null);
     const openModal = () => dialogRef.current?.showModal();
     const closeModal = () => dialogRef.current?.close();
     //create a 8x8 useState array, 
@@ -59,9 +59,9 @@ export function Board() {
             }
         } else if (val === 'S') {
             let head = snakeData[0]
-            let tail = snakeData.at(-1)
+            let tail = snakeData.at(-1)!
             if (rowIndex === head[0] && index === head[1]) {
-                let headNext = snakeData.at(1)
+                let headNext = snakeData.at(1)!
                 let x = headNext[0] - head[0]
                 let y = headNext[1] - head[1]
                 let radian = Math.atan2(y, x)
@@ -72,7 +72,7 @@ export function Board() {
                     style: { transform: `rotate(${degrees}deg) scale(1.24)` }
                 }
             } else if (rowIndex === tail[0] && index === tail[1]) {
-                let tailNext = snakeData.at(-2)
+                let tailNext = snakeData.at(-2)!
                 let x = tailNext[0] - tail[0]
                 let y = tailNext[1] - tail[1]
                 let radian = Math.atan2(y, x)
@@ -85,9 +85,9 @@ export function Board() {
                 const sindex = snakeData.findIndex(coord =>
                     coord[0] === rowIndex && coord[1] === index
                 );
-                let currSnake = snakeData.at(sindex)
-                let nextSnake = snakeData.at(sindex + 1)
-                let prevSnake = snakeData.at(sindex - 1)
+                let currSnake = snakeData.at(sindex)!
+                let nextSnake = snakeData.at(sindex + 1)!
+                let prevSnake = snakeData.at(sindex - 1)!
                 if (nextSnake[0] === prevSnake[0] || nextSnake[1] === prevSnake[1]) {
                     let x = nextSnake[0] - currSnake[0]
                     let y = nextSnake[1] - currSnake[1]
@@ -234,10 +234,10 @@ export function Board() {
 
 
                 </div>
-                <div className = "mt-2 flex justify-end">
-                <button className = "w-[2.4vw] h-[2.4vw] p-0 bg-blue-200" onClick={gameReset}>
-                    <img src = "/Pieces/refresh.svg" ></img>
-                </button>
+                <div className="mt-2 flex justify-end">
+                    <button className="w-[2.4vw] h-[2.4vw] p-0 bg-blue-200" onClick={gameReset}>
+                        <img src="/Pieces/refresh.svg" ></img>
+                    </button>
                 </div>
             </div>
 
