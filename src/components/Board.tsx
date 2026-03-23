@@ -126,19 +126,15 @@ export function Board() {
     const handleClick = (column: number, row: number) => {
 
         if (cells[column][row] === 2) {
-            if (boardArray[column][row] === 'k'){
-                openModal()
-                console.log("checkmate")
-            }
-            let m2Square = coordsToSquare(row * 10 + (7 - column))
+            const capturingBlackKing = boardArray[column][row] === 'k';
+            const m2Square = coordsToSquare(row * 10 + (7 - column));
             move(selectedSquare as Square, m2Square);
             setSnakeData(getSnake());
 
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
-            setBoardArray(getBoardState())
-            if ( chess.isCheckmate()) {
-                openModal()
-                console.log("checkmate")
+            setBoardArray(getBoardState());
+            if (capturingBlackKing || chess.isCheckmate()) {
+                openModal();
             }
         } else if (cells[column][row] === 1) {
             // Clicked on already selected piece - unhighlight
