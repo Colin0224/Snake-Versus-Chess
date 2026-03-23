@@ -49,7 +49,7 @@ export function Header() {
 
                     <h2 className="text-lg pt-4 font-bold mb-1">⚖️ Unintuitive Rules for Balance:</h2>
                     <p className="ml-1">📏 Snake Grows Longer when it captures a piece</p>
-                    <p className="ml-1">♞ Black Pawns can only promote to a knight</p>
+                    <p className="ml-1">♞ Black Pawns can only promote to a Queen</p>
                 </div>
             </dialog>
         </div>

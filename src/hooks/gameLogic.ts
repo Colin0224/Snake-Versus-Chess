@@ -135,7 +135,7 @@ export function useGameLogic() {
             // now that i think about it, 
             // im not sure, 
             // because 
-            chess.move({ from: square1, to: square2, promotion: 'n' });
+            chess.move({ from: square1, to: square2, promotion: 'q' });
 
             let p = chess.fen().split(' ');
             currentTurn = currentTurn === 'W' ? 'B' : 'W';

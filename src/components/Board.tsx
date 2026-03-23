@@ -126,14 +126,14 @@ export function Board() {
     const handleClick = (column: number, row: number) => {
 
         if (cells[column][row] === 2) {
-
+            const capturedPiece = boardArray[column][row];
             let m2Square = coordsToSquare(row * 10 + (7 - column))
             move(selectedSquare as Square, m2Square);
             setSnakeData(getSnake());
 
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
             setBoardArray(getBoardState())
-            if (chess.isCheckmate()) {
+            if (capturedPiece === 'k' || chess.isCheckmate()) {
                 openModal()
                 console.log("checkmate")
             }
@@ -205,7 +205,9 @@ export function Board() {
 
 
     return (
+        
         <div>
+            
             {/* This is an 8x8 Board */}
             <div className="bg-white rounded-xl shadow-lg p-6 pb-2">
 
