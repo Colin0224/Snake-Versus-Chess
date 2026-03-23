@@ -126,14 +126,17 @@ export function Board() {
     const handleClick = (column: number, row: number) => {
 
         if (cells[column][row] === 2) {
-            const capturedPiece = boardArray[column][row];
+            if (boardArray[column][row] === 'k'){
+                openModal()
+                console.log("checkmate")
+            }
             let m2Square = coordsToSquare(row * 10 + (7 - column))
             move(selectedSquare as Square, m2Square);
             setSnakeData(getSnake());
 
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
             setBoardArray(getBoardState())
-            if (capturedPiece === 'k' || chess.isCheckmate()) {
+            if ( chess.isCheckmate()) {
                 openModal()
                 console.log("checkmate")
             }
