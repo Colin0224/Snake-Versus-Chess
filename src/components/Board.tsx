@@ -1,14 +1,10 @@
 import './Board.css'
 import { useState, useRef } from 'react';
-import { useGameLogic, squareToCoords, coordsToSquare } from '../hooks/gameLogic';
+import { createGameLogic, squareToCoords, coordsToSquare } from '../hooks/gameLogic';
 import { type Square } from 'chess.js';
 
 
-const { chess, getBoardState, chessMoves, move, getSnake, resetGame } = useGameLogic();
-
-
-
-let selectedSquare: Square | '' = ''
+const { chess, getBoardState, chessMoves, move, getSnake, resetGame } = createGameLogic();
 
 const typeMap = {
     p: 'BPawn',
@@ -25,7 +21,7 @@ const typeMap = {
     R: 'WRook'
 };
 
-const degMap = {
+const degMap: Record<string, number> = {
     "1, 1": 270,
     "1, -1": 0,
     "-1, 1": 180,
@@ -33,6 +29,7 @@ const degMap = {
 }
 
 export function Board() {
+    const selectedSquare = useRef<Square | ''>('');
 
     const [snakeData, setSnakeData] = useState(() => getSnake());
 
@@ -58,13 +55,13 @@ export function Board() {
                 style: {}
             }
         } else if (val === 'S') {
-            let head = snakeData[0]
-            let tail = snakeData.at(-1)!
+            const head = snakeData[0]
+            const tail = snakeData.at(-1)!
             if (rowIndex === head[0] && index === head[1]) {
-                let headNext = snakeData.at(1)!
-                let x = headNext[0] - head[0]
-                let y = headNext[1] - head[1]
-                let radian = Math.atan2(y, x)
+                const headNext = snakeData.at(1)!
+                const x = headNext[0] - head[0]
+                const y = headNext[1] - head[1]
+                const radian = Math.atan2(y, x)
                 const degrees = -1 * radian * (180 / Math.PI);
 
                 return {
@@ -72,10 +69,10 @@ export function Board() {
                     style: { transform: `rotate(${degrees}deg) scale(1.24)` }
                 }
             } else if (rowIndex === tail[0] && index === tail[1]) {
-                let tailNext = snakeData.at(-2)!
-                let x = tailNext[0] - tail[0]
-                let y = tailNext[1] - tail[1]
-                let radian = Math.atan2(y, x)
+                const tailNext = snakeData.at(-2)!
+                const x = tailNext[0] - tail[0]
+                const y = tailNext[1] - tail[1]
+                const radian = Math.atan2(y, x)
                 const degrees = -1 * (radian - Math.PI / 2) * (180 / Math.PI);
                 return {
                     src: '/Pieces/snakeTail.svg',
@@ -85,26 +82,26 @@ export function Board() {
                 const sindex = snakeData.findIndex(coord =>
                     coord[0] === rowIndex && coord[1] === index
                 );
-                let currSnake = snakeData.at(sindex)!
-                let nextSnake = snakeData.at(sindex + 1)!
-                let prevSnake = snakeData.at(sindex - 1)!
+                const currSnake = snakeData.at(sindex)!
+                const nextSnake = snakeData.at(sindex + 1)!
+                const prevSnake = snakeData.at(sindex - 1)!
                 if (nextSnake[0] === prevSnake[0] || nextSnake[1] === prevSnake[1]) {
-                    let x = nextSnake[0] - currSnake[0]
-                    let y = nextSnake[1] - currSnake[1]
-                    let radian = Math.atan2(y, x)
+                    const x = nextSnake[0] - currSnake[0]
+                    const y = nextSnake[1] - currSnake[1]
+                    const radian = Math.atan2(y, x)
                     const degrees = -1 * (radian) * (180 / Math.PI);
                     return {
                         src: '/Pieces/snakeBody.svg',
                         style: { transform: `rotate(${degrees}deg) scale(1.24)` }
                     }
                 } else {
-                    let vals = [0, 0]
+                    const vals = [0, 0]
                     vals[0] += nextSnake[0] - currSnake[0]
                     vals[1] += nextSnake[1] - currSnake[1]
                     vals[0] += prevSnake[0] - currSnake[0]
                     vals[1] += prevSnake[1] - currSnake[1]
-                    let strVal = `${vals[0]}, ${vals[1]}`
-                    const degrees = (degMap as any)[strVal] || 0;
+                    const strVal = `${vals[0]}, ${vals[1]}`
+                    const degrees = degMap[strVal] ?? 0;
 
                     return {
                         src: '/Pieces/snakeCurve.svg',
@@ -128,7 +125,7 @@ export function Board() {
         if (cells[column][row] === 2) {
             const capturingBlackKing = boardArray[column][row] === 'k';
             const m2Square = coordsToSquare(row * 10 + (7 - column));
-            move(selectedSquare as Square, m2Square);
+            move(selectedSquare.current as Square, m2Square);
             setSnakeData(getSnake());
 
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
@@ -139,9 +136,9 @@ export function Board() {
         } else if (cells[column][row] === 1) {
             // Clicked on already selected piece - unhighlight
             setCells(Array(8).fill(null).map(() => Array(8).fill(0)));
-            selectedSquare = '';
+            selectedSquare.current = '';
         } else {
-            selectedSquare = updateBoardColor(column, row)
+            selectedSquare.current = updateBoardColor(column, row)
         }
 
     };
@@ -152,16 +149,16 @@ export function Board() {
         setSnakeData(getSnake());
         setBoardArray(getBoardState());
         setCells(createEmptyBoard());
-        selectedSquare = '';
+        selectedSquare.current = '';
         closeModal();
     };
 
     const updateBoardColor = (column: number, row: number) => {
-        let updatedCell = handleClear()
+        const updatedCell = handleClear()
 
-        let square = coordsToSquare(10 * row + (7 - column))
+        const square = coordsToSquare(10 * row + (7 - column))
 
-        let matrix = structuredClone(updatedCell);
+        const matrix = structuredClone(updatedCell);
 
         matrix[column][row] = 1;
 
@@ -170,10 +167,10 @@ export function Board() {
 
         moves.forEach((move) => {
 
-            let temp = squareToCoords(move.to)
+            const temp = squareToCoords(move.to)
 
-            let v2 = temp[0].valueOf()
-            let v1 = temp[1].valueOf()
+            const v2 = temp[0].valueOf()
+            const v1 = temp[1].valueOf()
             if (boardArray[7 - v1][v2] === 'S') {
                 matrix[7 - v1][v2] = 1;
             } else {
@@ -216,18 +213,22 @@ export function Board() {
 
 
                         row.map((val, index) => {
-                            const { src, style } = svgPiece(val, rowIndex, index);
+                            const piece = val !== ' ' ? svgPiece(val, rowIndex, index) : null;
                             return (
                                 <div key={`${rowIndex}-${index}`}
-                                    className={`pd-1 size-14 flex items-center justify-center ${cells[rowIndex][index] === 1 ? 'bg-[#B1A7FC]' : (rowIndex + index) % 2 === 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]'}`}
-                                    onClick={() => handleClick(rowIndex, index)}>{
-                                        (val !== ' ' || cells[rowIndex][index] === 2) && (<img src={src} style={style}
-                                            className={` p-[6px] ${cells[rowIndex][index] === 2 ? 'h-4 w-4 bg-[#9990EB] rounded-full' : ''}
-                                `
-                                            } />
-
-
-                                        )}</div>
+                                    className={`pd-1 relative size-14 flex items-center justify-center ${cells[rowIndex][index] === 1 ? 'bg-[#B1A7FC]' : (rowIndex + index) % 2 === 1 ? 'bg-[#B7C0D8]' : 'bg-[#E8EDF9]'}`}
+                                    onClick={() => handleClick(rowIndex, index)}>
+                                    {piece && (
+                                        <img
+                                            src={piece.src}
+                                            style={piece.style}
+                                            className="p-[6px]"
+                                        />
+                                    )}
+                                    {cells[rowIndex][index] === 2 && (
+                                        <span className="pointer-events-none absolute left-1/2 top-1/2 z-10 h-[25%] w-[25%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#9990EB]/70" />
+                                    )}
+                                </div>
                             )
                         }
                         )

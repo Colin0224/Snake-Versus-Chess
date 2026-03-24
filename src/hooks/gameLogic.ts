@@ -9,6 +9,8 @@ const INITIAL_FEN = 'rnb1kbnr/pppppppp/8/8/8/8/3S4/7K w kq - 0 1';
 const snakeReset: SnakeSegment[] = [[6, 3], [6, 2], [6, 1], [6, 0], [7, 0]];
 const cloneSnake = (segments: SnakeSegment[]): SnakeSegment[] =>
     segments.map(([row, col]) => [row, col]);
+const cloneBoard = (state: string[][]): string[][] =>
+    state.map((row) => [...row]);
 
 
 
@@ -20,8 +22,9 @@ let board: string[][] = Array.from({ length: 8 }, () =>
 let currentTurn: 'B' | 'W' = 'W';
 
 let snake: SnakeSegment[] = cloneSnake(snakeReset);
+let gameOver = false;
 //Okay think about it, does it matter to the snake what the pieces are? like knight or some crap, I think its concerned with itself, all pieces are P, and there is a king, K, own M, the head is H, and S is the rest of the snake, 
-export function useGameLogic() {
+export function createGameLogic() {
 
     // Done chess.load(fen): Sets the board to a specific state (used at the top with your snake FEN string).
 
@@ -47,13 +50,13 @@ export function useGameLogic() {
             chess.load(fen.replace(/S/g, 'n'));  // Black's turn = BLACK knight
         }
 
-        let boardState = fen.split(' ')[0];
+        const boardState = fen.split(' ')[0];
         board = boardState?.split('/').map(row => {
             return row
                 .replace(/\d/g, d => ' '.repeat(Number(d)))
                 .split('');
         });
-        for (let s of snake) {
+        for (const s of snake) {
             board[s[0]][s[1]] = "S"
 
         }
@@ -63,6 +66,7 @@ export function useGameLogic() {
     const resetGame = () => {
         currentTurn = 'W';
         snake = cloneSnake(snakeReset);
+        gameOver = false;
         loadBoard(INITIAL_FEN);
     }
 
@@ -75,8 +79,12 @@ export function useGameLogic() {
 
     // First step is to try to hack this, 
     const move = (square1: Square, square2: Square) => {
-        let tempindex = squareToCoords(square1)
-        let val = board[7 - tempindex[1]][tempindex[0]]
+        if (gameOver) {
+            return;
+        }
+
+        const tempindex = squareToCoords(square1)
+        const val = board[7 - tempindex[1]][tempindex[0]]
 
         if (val === "S" && currentTurn === 'W') {
             // // Calculate adjacent squares for snake movement
@@ -99,10 +107,11 @@ export function useGameLogic() {
 
             // return snakeMoves;
 
-            let sStart = squareToCoords(square1)
-            let sEnd = squareToCoords(square2)
+            const sStart = squareToCoords(square1)
+            const sEnd = squareToCoords(square2)
+            const capturedPiece = board[7 - sEnd[1]][sEnd[0]];
             let eaten = false
-            if (board[7 - sEnd[1]][sEnd[0]] !== 'S' && board[7 - sEnd[1]][sEnd[0]] !== ' ') {
+            if (capturedPiece !== 'S' && capturedPiece !== ' ') {
                 eaten = true
             }
 
@@ -111,18 +120,27 @@ export function useGameLogic() {
             snake.unshift([7 - sEnd[1], sEnd[0]])
 
             if (!eaten) {
-                let temp = snake.pop();
+                const temp = snake.pop();
                 if (temp) {
                     board[temp[0]][temp[1]] = ' '
                 }
             }
 
-            let p = chess.fen().split(' ');
-            currentTurn = 'B';
-            loadBoard(`${boardToFen(board)} b ${p[2]} ${p[3]} ${p[4]} ${p[5]}`);
+            if (capturedPiece === 'k') {
+                currentTurn = 'B';
+                gameOver = true;
+            } else {
+                const p = chess.fen().split(' ');
+                currentTurn = 'B';
+                loadBoard(`${boardToFen(board)} b ${p[2]} ${p[3]} ${p[4]} ${p[5]}`);
+            }
 
 
         } else {
+            const srcCoords = squareToCoords(square1);
+            const destCoords = squareToCoords(square2);
+            const destVal = board[7 - destCoords[1]][destCoords[0]];
+
             // I need a way to clean up my ideas, 
             // Okay so before someone does chess.move
             // I need to clean up my board, 
@@ -135,12 +153,20 @@ export function useGameLogic() {
             // now that i think about it, 
             // im not sure, 
             // because 
-            chess.move({ from: square1, to: square2, promotion: 'q' });
+            if (destVal === 'k') {
+                board[7 - destCoords[1]][destCoords[0]] = val;
+                board[7 - srcCoords[1]][srcCoords[0]] = ' ';
+                currentTurn = 'B';
+                gameOver = true;
+            } else {
+                chess.move({ from: square1, to: square2, promotion: 'q' });
 
-            let p = chess.fen().split(' ');
-            currentTurn = currentTurn === 'W' ? 'B' : 'W';
-            loadBoard(chess.fen());
-            chess.load(`${boardToFen(board)} ${currentTurn.toLowerCase()} ${p[2]} ${p[3]} ${p[4]} ${p[5]}`.replace(/S/g, currentTurn === 'W' ? 'N' : 'n'));
+                const p = chess.fen().split(' ');
+                currentTurn = currentTurn === 'W' ? 'B' : 'W';
+                loadBoard(chess.fen());
+                chess.load(`${boardToFen(board)} ${currentTurn.toLowerCase()} ${p[2]} ${p[3]} ${p[4]} ${p[5]}`.replace(/S/g, currentTurn === 'W' ? 'N' : 'n'));
+                gameOver = chess.isCheckmate();
+            }
 
         }
     }
@@ -148,32 +174,76 @@ export function useGameLogic() {
         return cloneSnake(snake);
     }
     const chessMoves = (square: Square) => {
-        let arr = squareToCoords(square)
-        let col = arr[0];
-        let row = 7 - arr[1];
+        if (gameOver) {
+            return [];
+        }
+
+        const arr = squareToCoords(square)
+        const col = arr[0];
+        const row = 7 - arr[1];
         if (currentTurn === 'B' && board[row][col] !== "S") {
             return chess.moves({ square: square, verbose: true });
         } else if (currentTurn === 'W') {
 
             if (board[row][col] === "K") {
                 return chess.moves({ square: square, verbose: true });
-            } else if (snake[0][0] === row && snake[0][1] === col && !chess.inCheck()) {
+            } else if (snake[0][0] === row && snake[0][1] === col) {
                 // Calculate adjacent squares for snake movement
                 let snakeMoves: { to: Square }[] = [];
 
 
-                let file = col;  // 0-7 (a-h)
-                let rank = 7 - row;  // 0-7 (1-8)
+                const file = col;  // 0-7 (a-h)
+                const rank = 7 - row;  // 0-7 (1-8)
 
                 // Check all 4 directions (up, down, left, right)
                 const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
 
-                for (let [df, dr] of directions) {
-                    let newFile = file + df;
-                    let newRank = rank + dr;
+                for (const [df, dr] of directions) {
+                    const newFile = file + df;
+                    const newRank = rank + dr;
                     if (newFile >= 0 && newFile < 8 && newRank >= 0 && newRank < 8) {
                         snakeMoves.push({ to: coordsToSquare(newFile * 10 + newRank) });
                     }
+                }
+
+                if (chess.inCheck()) {
+                    const savedFen = chess.fen();
+                    const savedFenParts = savedFen.split(' ');
+
+                    snakeMoves = snakeMoves.filter(({ to }) => {
+                        const [destCol, destRank] = squareToCoords(to);
+                        const destRow = 7 - destRank;
+                        const destVal = board[destRow][destCol];
+
+                        if (destVal === 'k') {
+                            return true;
+                        }
+
+                        const testBoard = cloneBoard(board);
+                        const testSnake = cloneSnake(snake);
+                        const [headRow, headCol] = testSnake[0];
+                        const eaten = destVal !== ' ' && destVal !== 'S';
+
+                        testBoard[headRow][headCol] = ' ';
+                        testBoard[destRow][destCol] = 'S';
+                        testSnake.unshift([destRow, destCol]);
+
+                        if (!eaten) {
+                            const tail = testSnake.pop();
+                            if (tail) {
+                                testBoard[tail[0]][tail[1]] = ' ';
+                            }
+                        }
+
+                        try {
+                            chess.load(`${boardToFen(testBoard).replace(/S/g, 'N')} ${savedFenParts[1]} ${savedFenParts[2]} ${savedFenParts[3]} ${savedFenParts[4]} ${savedFenParts[5]}`);
+                            return !chess.inCheck();
+                        } catch {
+                            return false;
+                        }
+                    });
+
+                    chess.load(savedFen);
                 }
 
                 return snakeMoves;
@@ -212,7 +282,7 @@ export function useGameLogic() {
 }
 export function squareToCoords(input: string): number[] {
 
-    let char = input[0]
+    const char = input[0]
     const input1 = char.toLowerCase().charCodeAt(0) - 97;
 
 
@@ -265,11 +335,10 @@ export function boardToFen(board: string[][]): string {
 
 export function coordsToSquare(input: number): Square {
     let i1 = Math.floor(input / 10);
-    let i2 = input % 10 + 1;
+    const i2 = input % 10 + 1;
 
     i1 += 97;
-    let c1 = String.fromCharCode(i1);
+    const c1 = String.fromCharCode(i1);
 
     return (c1 + i2) as Square;
 }
-
